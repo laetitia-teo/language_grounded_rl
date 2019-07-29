@@ -218,7 +218,6 @@ class RelationsGrammar():
         # generate random position
         # generate obj1 position according to relation
         nmin, nmax, mmin, mmax = 0, self.env.gridsize, 0, self.env.gridsize
-        print(nmin, nmax, mmin, mmax)
         if relation == 'next to':
             relation = random.choice(['west of', 'east of', 'north of', \
                 'south of'])
@@ -233,7 +232,6 @@ class RelationsGrammar():
         n = np.random.randint(nmin, nmax)
         m = np.random.randint(mmin, mmax)
         pos = n, m
-        print(relation)
         if relation == 'west of':
             pos_ = n-1, m
         elif relation == 'east of':
@@ -242,7 +240,7 @@ class RelationsGrammar():
             pos_ = n, m-1
         elif relation == 'south of':
             pos_ = n, m+1
-        # populate the grid with those two objects, according to their specsS
+        # populate the grid with those two objects, according to their specs
         obj2color, obj2shape = obj2specs
         obj2color = self.env.colordict[obj2color]
         self.env.insert_shape(obj2shape, pos, obj2color)

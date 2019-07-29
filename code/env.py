@@ -10,9 +10,7 @@ as floats and rounded to the closest integer value by the environment.
 
 There are four cardinal directions : north, south, east, west.
 
-Maybe define a grammar for generating instructions ?
-
-Walking in Terry Winograd's footsteps...
+(trying to) walk in Terry Winograd's footsteps...
 """
 
 import numpy as np 
@@ -86,7 +84,6 @@ class GridLUImage():
         lowx, highx, lowy, highy = self.pos_to_coords(pos)
         cell = self.grid[lowx:highx, lowy:highy, :]
         one_color = cell[0, 0]  # color vector
-        print('foo')
         return one_color.any() and not (cell - one_color).any()
 
     def make_shape(self, shape, color=np.ones(3)):
@@ -132,7 +129,6 @@ class GridLUImage():
             np.sum(self.grid[lowx:highx, lowy:highy, :], axis=-1))
         shape = np.expand_dims(shape, axis=-1)
         shape_cat = np.concatenate((shape, shape, shape), axis=-1)
-        print(shape_cat.shape)
         self.grid[lowx:highx, lowy:highy, :] += shape_cat
         self.shape_pos_list.append(pos)
         self.agent_pos = np.array(pos)
@@ -164,14 +160,10 @@ class GridLUImage():
         shape and color.
         """
         lowx, highx, lowy, highy = self.pos_to_coords(pos)
-        print('shape : %s, pos : %s' % (shape, pos))
-        print(self.shape_pos_list)
         if type(shape) == str:
             shape = self.make_shape(shape, color)
         if not self.is_empty(pos):
-            print(self.retrieve_shape(pos))
             if self.contains_only_agent(pos):
-                print('bar')
                 self.delete_agent(pos, self.agent_state)
                 self.grid[lowx:highx, lowy:highy, :] = shape
                 self.shape_pos_list.append(pos)
@@ -183,8 +175,6 @@ class GridLUImage():
         else:
             self.grid[lowx:highx, lowy:highy, :] = shape
             self.shape_pos_list.append(pos)
-        print('inserted')
-        print(self.shape_pos_list)
 
     def delete_shape(self, pos):
         """
@@ -220,7 +210,6 @@ class GridLUImage():
             self.shape_pos_list]
         candidate_positions = [n for n in range(self.gridsize**2) if n not in \
             intposlist]
-        print(candidate_positions)
         new_positions = np.random.choice(candidate_positions, n_shapes, False)
         poss = []
         for intpos in new_positions:
@@ -277,7 +266,6 @@ class GridLU(GridLUImage):
                 # move only if there is no shape barring the way
                 self.delete_agent(self.agent_pos, self.agent_state)
                 shape = self.retrieve_shape(self.agent_pos)
-                print(shape)
                 self.delete_shape(self.agent_pos)
                 self.agent_pos += direction
                 self.insert_shape(shape, self.agent_pos)
@@ -333,6 +321,19 @@ class GridLU(GridLUImage):
 
     def get_state(self):
         return self.grid
+
+    def export_state_to_file(self):
+        return NotImplemented
+
+    def import_state_from_file(self):
+        return NotImplemented
+
+    def import_actions_and_play(self):
+        """
+        Imports a text file listing the actions, plays them in the environment
+        and returns a list of images of the action execution.
+        """
+        return NotImplemented
 
 # ============================= Test ======================================
 
