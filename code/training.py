@@ -34,8 +34,11 @@ def create_true_dataset(g):
     n_images = 20
     save_dir = op.join('data', 'B')
     B = Buffer(capacity, imsize)
-    for _ in range(n_sentences):
+    for i in range(n_sentences):
         images, sentence = g.generate_images(n_images=n_images)
+        images = np.array(images)
+        print(i)
+        print(images.any())
         B.extend(images, sentence)
     print(B.images)
     B.save(save_dir)

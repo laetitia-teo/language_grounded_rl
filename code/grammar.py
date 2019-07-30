@@ -217,20 +217,24 @@ class RelationsGrammar():
         sentence = tree.left_first()
         # generate random position
         # generate obj1 position according to relation
-        nmin, nmax, mmin, mmax = 0, self.env.gridsize, 0, self.env.gridsize
-        if relation == 'next to':
-            relation = random.choice(['west of', 'east of', 'north of', \
-                'south of'])
-        if relation == 'west of':
-            nmin += 1
-        elif relation == 'east of':
-            nmax -= 1
-        elif relation == 'north of':
-            mmin += 1
-        elif relation == 'south of':
-            mmax -= 1
         images = []
         for _ in range(n_images):
+            nmin, nmax, mmin, mmax = 0, self.env.gridsize, 0, self.env.gridsize
+            relation = self.extract_relation(tree)[0]
+            if relation == 'next to':
+                relation = random.choice(['west of', 'east of', 'north of', \
+                    'south of'])
+            if relation == 'west of':
+                nmin += 1
+            elif relation == 'east of':
+                nmax -= 1
+            elif relation == 'north of':
+                mmin += 1
+            elif relation == 'south of':
+                mmax -= 1
+
+            self.env.reset_grid()
+
             n = np.random.randint(nmin, nmax)
             m = np.random.randint(mmin, mmax)
             pos = n, m
@@ -262,7 +266,6 @@ class RelationsGrammar():
                 self.env.insert_agent(pos)
             # actually generate the image
             images.append(np.array(self.env.grid))
-            self.env.reset_grid()
         return images, sentence
         
     def parse_sentence(self):

@@ -69,18 +69,18 @@ class Buffer():
         step = len(x)
 
         x = np.flip(x, axis=0)
-        self.images = np.roll(self.images, step)
+        self.images = np.roll(self.images, step, axis=0)
         self.images[:step] = x
 
         # roll on intruction data
-        self.instructions.rotate(step)
+        # self.instructions.rotate(step)
         self.instructions.extendleft(i)
 
         if v is None:
             v = np.zeros(step, 'f')
         else:
             v = v.flip(v, axis=0)
-        self.values = np.roll(self.values, step)
+        self.values = np.roll(self.values, step, axis=0)
         self.values[:step] = v
 
     def sample_batch(self, batch_size, disard_top=False):
@@ -108,7 +108,7 @@ class Buffer():
 
         return images, instructions
 
-    def re_evalue(self, value_function):
+    def re_evaluate(self, value_function):
         """
         Re-evaluates all the images in the buffer according to the passed
         value_function.
@@ -129,7 +129,7 @@ class Buffer():
         for i, content in enumerate(self):
             img, ins, val = content
             img = (img * 255).astype(np.uint8)
-            img = Image.fromarray(img.T)
+            img = Image.fromarray(img)
             img.save(op.join(path, str(i) + '.png'))
             txt_ins.append(ins)
             txt_val.append(str(val))
@@ -167,7 +167,7 @@ class Buffer():
         values = values[:len(instructions)]
         for i in range(len(instructions)):
             image = Image.open(op.join(path, str(i) + '.png'))
-            image = image.T
+            image = image
             image = (image / 255).astype(np.float)
             images.append(image)
         self.extend(images, instructions, values)
