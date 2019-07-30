@@ -25,7 +25,7 @@ class GridLUImage():
 
     def __init__(self,
                  gridsize=5,
-                 cellsize=15):
+                 cellsize=8):
         self.gridsize = gridsize
         self.cellsize = cellsize
         size = gridsize * cellsize
@@ -47,6 +47,7 @@ class GridLUImage():
         self.agent_state = 'passive'
 
     def reset_grid(self):
+        size = self.gridsize * self.cellsize
         self.grid = np.zeros((size, size, 3))
         self.shape_pos_list = []
 

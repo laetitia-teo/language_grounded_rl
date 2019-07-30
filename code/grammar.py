@@ -204,13 +204,13 @@ class RelationsGrammar():
     def extract_relation(self, tree):
         return tree.conditional_search('<rel2>')
 
-    def genarate_image(self, tree=None, n_images=1):
+    def generate_images(self, tree=None, n_images=1):
         """
         Generates a random instruction, then creates a number n_images
         of images corresponding to the valid completion of this task.
         """
         if not tree:
-            tree = self.random_tree
+            tree = self.random_tree()
         obj2specs = self.extract_obj2_specs(tree)
         obj1specs = self.extract_obj1_specs(tree)
         relation = self.extract_relation(tree)[0]
@@ -229,38 +229,41 @@ class RelationsGrammar():
             mmin += 1
         elif relation == 'south of':
             mmax -= 1
-        n = np.random.randint(nmin, nmax)
-        m = np.random.randint(mmin, mmax)
-        pos = n, m
-        if relation == 'west of':
-            pos_ = n-1, m
-        elif relation == 'east of':
-            pos_ = n+1, m
-        elif relation == 'north of':
-            pos_ = n, m-1
-        elif relation == 'south of':
-            pos_ = n, m+1
-        # populate the grid with those two objects, according to their specs
-        obj2color, obj2shape = obj2specs
-        obj2color = self.env.colordict[obj2color]
-        self.env.insert_shape(obj2shape, pos, obj2color)
-        if len(obj1specs) == 1:
-            # obj1 is the agent
-            self.env.insert_agent(pos_)
-            agent_inserted = True
-        if len(obj1specs) == 2:
-            obj1color, obj1shape = obj1specs
-            obj1color = self.env.colordict[obj1color]
-            self.env.insert_shape(obj1shape, pos_, obj1color)
-            agent_inserted = False
-        nb_other_shapes = np.random.choice(int(self.env.gridsize**2/2))
-        self.env.insert_random_shapes(nb_other_shapes)
-        if not agent_inserted:
-            pos = np.random.choice(self.env.gridsize, 2)
-            self.env.insert_agent(pos)
-        # actually generate the image
-        self.env.show_grid()
-        return self.env.grid
+        images = []
+        for _ in range(n_images):
+            n = np.random.randint(nmin, nmax)
+            m = np.random.randint(mmin, mmax)
+            pos = n, m
+            if relation == 'west of':
+                pos_ = n-1, m
+            elif relation == 'east of':
+                pos_ = n+1, m
+            elif relation == 'north of':
+                pos_ = n, m-1
+            elif relation == 'south of':
+                pos_ = n, m+1
+            # populate the grid with those two objects, according to their specs
+            obj2color, obj2shape = obj2specs
+            obj2color = self.env.colordict[obj2color]
+            self.env.insert_shape(obj2shape, pos, obj2color)
+            if len(obj1specs) == 1:
+                # obj1 is the agent
+                self.env.insert_agent(pos_)
+                agent_inserted = True
+            if len(obj1specs) == 2:
+                obj1color, obj1shape = obj1specs
+                obj1color = self.env.colordict[obj1color]
+                self.env.insert_shape(obj1shape, pos_, obj1color)
+                agent_inserted = False
+            nb_other_shapes = np.random.choice(int(self.env.gridsize**2/2))
+            self.env.insert_random_shapes(nb_other_shapes)
+            if not agent_inserted:
+                pos = np.random.choice(self.env.gridsize, 2)
+                self.env.insert_agent(pos)
+            # actually generate the image
+            images.append(np.array(self.env.grid))
+            self.env.reset_grid()
+        return images, sentence
         
     def parse_sentence(self):
         """
@@ -271,7 +274,7 @@ class RelationsGrammar():
 
 # ============================ Test ====================================
 
-c = RelationsGrammar()
-t = c.random_tree()
-print(t.left_first())
-c.genarate_image(t)
+# c = RelationsGrammar()
+# t = c.random_tree()
+# print(t.left_first())
+# c.generate_images(t)

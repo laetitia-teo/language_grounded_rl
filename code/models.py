@@ -1,5 +1,5 @@
 """
-This is the module for the reward model.
+This is the module for the reward and policy models.
 The reward model, or discriminator, is composed of a visual module (CNN) for 
 interpreting the image data, and of a temporal module (LSTM) for interpreting
 the textual data.
@@ -15,19 +15,38 @@ class FiLM_LSTM(nn.Module):
     This LSTM consumes the instruction and returns it as a set of 
     conditionning parameters (multiplyer and biases) to be applyed to the 
     convolutional layers of the reward and policy models.
+
+    input_size, hidden_size are parameters for the LSTM layer.
+    output_shapes describes the shapes of the output of the layer.
+    it is a list of tuple of ints describing the different layer sizes
     """
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, 
+                 input_size,
+                 hidden_size,
+                 output_shapes):
         super().__init__()
         self.lstm = nn.LSTM(input_size, hidden_size)  # just one layer for now
-        self.linear = nn.Linear(hidden_size, output_size)
+        for i, output_shape in enumerate(output_shapes):
+            n_flat = np.prod(output_shape[i])
+            exp_g = 'self.gamma' + i + ' = nn.Linear(hidden_size, n_flat)'
+            exp_b = 'self.beta' + i + ' = nn.Linear(hidden_size, n_flat)'
+            eval(exp_g)
+            eval(exp_b)
 
     def forward(self, x):
+        """
+        The output is a list of tuples containing gamma and beta for each
+        convolutional layer.
+        """
         # maybe provide initial hidden state and initial context
         output, (hn, cn) = self.lstm(x)
-        out = F.relu(hn)
-        out = self.linear(out)
-        # another non-linearity ?
-        # maybe reshape here for use by the conv layers
+        hn = F.relu(hn)
+        out = []
+        for i, output_shape in enumerate(output_shapes):
+            exp = 'out.append(self.gamma' + i + '(hn), self.beta' + i + '(hn))'
+            eval(exp)
+            # another non-linearity ?
+            # maybe reshape here for use by the conv layers
         return out
 
 class ConvBlock(nn.Module):
@@ -51,7 +70,7 @@ class ConvBlock(nn.Module):
         x = F.relu(x)
         return x
 
-class Discriminator(nn.Module):
+class Reward(nn.Module):
 
     def __init__(self, image_shape, input_size, output_size, hidden_size=100):
         super().__init__()
@@ -67,27 +86,38 @@ class Discriminator(nn.Module):
         self.linear1 = nn.Linear(16384, 100)  # a bit much ?
         self.linear2 = nn.Linear(100, 1)
 
-        self.film_lstm = FiLM_LSTM(input_size, hidden_size, output_size)
+        output_shapes = [(33, 33, 16),
+                         (31, 31, 32),
+                         (31, 31, 64),
+                         (31, 31, 64),
+                         (31, 31, 64)]
+
+        self.film_lstm = FiLM_LSTM(input_size, hidden_size, output_shapes)
 
     def forward(self, x, s):
         """
         x: input image;
         s: input sentence sequence (after coding, embedding/whatever)
         """
-        gamma, beta = self.film_lstm(s)  # shape this
+        out = self.film_lstm(s)  # shape this
 
-        x = F.relu(self.conv1(x, gamma[0], beta[0]))
-        x = F.relu(self.conv2(x, gamma[1], beta[1]))
-        x3 = F.relu(self.conv3(x, gamma[2], beta[2]))
-        x = F.relu(self.conv4(x, gamma[3], beta[3]))
-        x = F.relu(self.conv5(x, gamma[4], beta[4], residual=x3))
+        t0, t1, t2, t3, t4 = out
+        for i in range(5):
+            exp = 'gamma' + i + ', beta' + i + ' = t' + i
+            eval(exp)
+
+        x = F.relu(self.conv1(x, gamma0, beta0))
+        x = F.relu(self.conv2(x, gamma1, beta1))
+        x3 = F.relu(self.conv3(x, gamma2, beta2))
+        x = F.relu(self.conv4(x, gamma3, beta3))
+        x = F.relu(self.conv5(x, gamma4, beta4, residual=x3))
         x = self.maxpool(x)
         x = F.relu(self.linear1(x))
         x = F.sigmoid(self.linear2(x))
 
         return x
 
-class Discriminator(nn.Module):
+class Policy(nn.Module):
 
     def __init__(self,
                  n_actions,
@@ -108,14 +138,25 @@ class Discriminator(nn.Module):
         self.linear1 = nn.Linear(16384, 100)  # a bit much ?
         self.linear2 = nn.Linear(100, n_actions)
 
-        self.film_lstm = FiLM_LSTM(input_size, hidden_size, output_size)
+        output_shapes = [(33, 33, 16),
+                         (31, 31, 32),
+                         (31, 31, 64),
+                         (31, 31, 64),
+                         (31, 31, 64)]
+
+        self.film_lstm = FiLM_LSTM(input_size, hidden_size, output_shapes)
 
     def forward(self, x, s):
         """
         x: input image;
         s: input sentence sequence (after coding, embedding/whatever)
         """
-        gamma, beta = self.film_lstm(s)  # shape this
+        out = self.film_lstm(s)  # shape this
+
+        t0, t1, t2, t3, t4 = out
+        for i in range(5):
+            exp = 'gamma' + i + ', beta' + i + ' = t' + i
+            eval(exp)
 
         x = F.relu(self.conv1(x, gamma[0], beta[0]))
         x = F.relu(self.conv2(x, gamma[1], beta[1]))
