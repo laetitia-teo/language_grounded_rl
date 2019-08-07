@@ -19,31 +19,28 @@ from grammar import RelationsGrammar
 from buffer import Buffer
 from models import Reward, Policy
 
-def create_true_dataset(g):
+def create_true_dataset(g, save_dir):
     """
-    Test function for the correct working of the buffers.
+    Creates and saves a dataset of candidate goal states with their
+    associated instruction.
 
-    input : a RelationsGrammar g.
-
-    outputs : a memory buffer containing example images, and the associated
-    instructions.
+    input : 
+        - a RelationsGrammar g;
+        - a save directory save_dir;
     """
     capacity = 200
     imsize = 40
     n_sentences = 10
     n_images = 20
-    save_dir = op.join('data', 'B')
     B = Buffer(capacity, imsize)
     for i in range(n_sentences):
         images, sentence = g.generate_images(n_images=n_images)
         images = np.array(images)
-        print(i)
-        print(images.any())
         B.extend(images, sentence)
-    print(B.images)
     B.save(save_dir)
 
 # ========================== Testing ====================================
 
+save_dir = op.join('data', 'B')
 g = RelationsGrammar()
-create_true_dataset(g)
+create_true_dataset(g, save_dir)

@@ -125,14 +125,18 @@ class Buffer():
         """
         txt_ins = []
         txt_val = []
-        txt_name = 'info.txt'
+        txt_name = 'instructions.txt'
+        # save images
         for i, content in enumerate(self):
             img, ins, val = content
+            # transpose image, so its orientation is good when printed :
+            img = np.swapaxes(img, 1, 2)
             img = (img * 255).astype(np.uint8)
             img = Image.fromarray(img)
             img.save(op.join(path, str(i) + '.png'))
             txt_ins.append(ins)
             txt_val.append(str(val))
+        # save instructions and values
         with open(op.join(path, txt_name), 'w') as f:
             f.write('## Instructions ##')
             for ins in txt_ins:
@@ -152,7 +156,8 @@ class Buffer():
         images = []
         instructions = []
         values = []
-        txt_name = 'info.txt'
+        txt_name = 'instructions.txt'
+        # read instructions and values
         with open(op.join(path, txt_name)) as f:
             state = 'ins'
             for line in f.readlines():
@@ -165,9 +170,11 @@ class Buffer():
                 else:
                     values.append(float(line))
         values = values[:len(instructions)]
+        # read images
         for i in range(len(instructions)):
             image = Image.open(op.join(path, str(i) + '.png'))
             image = image
             image = (image / 255).astype(np.float)
+            image = np.swapaxes(image, 1, 2)
             images.append(image)
         self.extend(images, instructions, values)
